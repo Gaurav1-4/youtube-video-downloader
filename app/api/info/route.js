@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
 
 async function fetchFromPrimaryAPI(videoId) {
-  const response = await fetch(`https://youtube-media-downloader.p.rapidapi.com/v2/video/details?videoId=${videoId}`, {
+  // We use youtube-info-download-api as the primary now because it has a massive 500,000 req/mo (500 units/day) limit!
+  const response = await fetch(`https://youtube-info-download-api.p.rapidapi.com/ajax/api.php?function=i&u=https%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3D${videoId}`, {
     headers: {
-      'x-rapidapi-host': 'youtube-media-downloader.p.rapidapi.com',
+      'x-rapidapi-host': 'youtube-info-download-api.p.rapidapi.com',
       'x-rapidapi-key': '317871f23fmshc0f05cc41c39675p1b4264jsn6b97536679aa'
     }
   });
@@ -13,47 +14,42 @@ async function fetchFromPrimaryAPI(videoId) {
   }
   const data = await response.json();
 
-  const title = data.title;
-  // Get highest quality thumbnail available
-  const thumbnail = data.thumbnails && data.thumbnails.length > 0 ? data.thumbnails[data.thumbnails.length - 1].url : '';
-  const author = data.channel?.name || 'Unknown Author';
-  const lengthSeconds = data.lengthSeconds;
+  if (!data.title || !data.thumbnail) {
+    throw new Error('Invalid response from Primary API');
+  }
 
-  // We no longer fetch or map video/audio formats to save bandwidth and compute
-  return { title, thumbnail, author, lengthSeconds, formats: { videoWithAudio: [], videoOnly: [], audioOnly: [] } };
+  // We upgrade the thumbnail to maxresdefault if possible
+  const hqThumbnail = data.thumbnail;
+  const maxResThumbnail = hqThumbnail.replace('hqdefault.jpg', 'maxresdefault.jpg');
+
+  return { 
+    title: data.title, 
+    thumbnail: maxResThumbnail, 
+    author: data.author || 'Unknown Author', 
+    lengthSeconds: 0, 
+    formats: { videoWithAudio: [], videoOnly: [], audioOnly: [] } 
+  };
 }
 
 async function fetchFromFallbackAPI(videoId) {
-  const headers = {
-    'x-rapidapi-host': 'youtube-data16.p.rapidapi.com',
-    'x-rapidapi-key': '317871f23fmshc0f05cc41c39675p1b4264jsn6b97536679aa',
-    'Content-Type': 'application/json'
-  };
+  // youtube-media-downloader (100/month limit) serves as a great fallback
+  const response = await fetch(`https://youtube-media-downloader.p.rapidapi.com/v2/video/details?videoId=${videoId}`, {
+    headers: {
+      'x-rapidapi-host': 'youtube-media-downloader.p.rapidapi.com',
+      'x-rapidapi-key': '317871f23fmshc0f05cc41c39675p1b4264jsn6b97536679aa'
+    }
+  });
 
-  // 1. Get video details (this is the ONLY request we make to save limits)
-  const detailsRes = await fetch(`https://youtube-data16.p.rapidapi.com/videos?ids=${videoId}`, { headers });
-  if (!detailsRes.ok) throw new Error('Fallback API details fetch failed');
-  const detailsData = await detailsRes.json();
-  
-  if (!detailsData.data || detailsData.data.length === 0) {
-    throw new Error('Video not found on Fallback API');
+  if (!response.ok) {
+    throw new Error('Fallback API fetch failed: ' + response.statusText);
   }
-  
-  const videoInfo = detailsData.data[0];
-  const title = videoInfo.title;
-  const author = videoInfo.channelTitle;
-  const lengthSeconds = videoInfo.parsedDuration;
-  
-  // Try to get maxres thumbnail, fallback to lower res if not available
-  const thumbnailObj = videoInfo.thumbnails;
-  let thumbnail = '';
-  if (thumbnailObj) {
-    thumbnail = thumbnailObj.maxres?.url || thumbnailObj.high?.url || thumbnailObj.medium?.url || thumbnailObj.default?.url || '';
-  }
+  const data = await response.json();
 
-  // We completely skip making the 2 extra API calls for video and audio files here!
-  // This triples the amount of searches you can do per day on the free limit.
-  return { title, thumbnail, author, lengthSeconds, formats: { videoWithAudio: [], videoOnly: [], audioOnly: [] } };
+  const title = data.title;
+  const thumbnail = data.thumbnails && data.thumbnails.length > 0 ? data.thumbnails[data.thumbnails.length - 1].url : '';
+  const author = data.channel?.name || 'Unknown Author';
+  
+  return { title, thumbnail, author, lengthSeconds: 0, formats: { videoWithAudio: [], videoOnly: [], audioOnly: [] } };
 }
 
 export async function GET(req) {
@@ -74,13 +70,13 @@ export async function GET(req) {
     if (!videoId) return NextResponse.json({error: 'Invalid URL'}, {status: 400});
 
     try {
-      console.log('Attempting Primary API...');
+      console.log('Attempting Primary API (youtube-info-download-api)...');
       const primaryData = await fetchFromPrimaryAPI(videoId);
       return NextResponse.json(primaryData);
     } catch (primaryErr) {
       console.error('Primary API failed, falling back...', primaryErr.message);
       try {
-        console.log('Attempting Fallback API...');
+        console.log('Attempting Fallback API (youtube-media-downloader)...');
         const fallbackData = await fetchFromFallbackAPI(videoId);
         return NextResponse.json(fallbackData);
       } catch (fallbackErr) {
