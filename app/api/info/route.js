@@ -75,8 +75,15 @@ export async function GET(req) {
 
     const getVideoId = (u) => {
       try {
+        if (!u.startsWith('http')) {
+          u = 'https://' + u;
+        }
         const parsed = new URL(u);
-        if (parsed.hostname.includes('youtube.com')) return parsed.searchParams.get('v');
+        if (parsed.hostname.includes('youtube.com')) {
+          // Some links might be youtube.com/shorts/ID
+          if (parsed.pathname.includes('/shorts/')) return parsed.pathname.split('/shorts/')[1];
+          return parsed.searchParams.get('v');
+        }
         if (parsed.hostname.includes('youtu.be')) return parsed.pathname.slice(1);
       } catch(e) {}
       return null;
