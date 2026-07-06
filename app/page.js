@@ -1,65 +1,97 @@
-import Image from "next/image";
+'use client';
+
+import { useState } from 'react';
+import { Search, Download, AlertCircle } from 'lucide-react';
+import VideoInfo from '../components/VideoInfo';
+import Loader from '../components/Loader';
 
 export default function Home() {
+  const [url, setUrl] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [videoData, setVideoData] = useState(null);
+
+  const handleSearch = async (e) => {
+    e.preventDefault();
+    if (!url.trim()) return;
+
+    setLoading(true);
+    setError('');
+    setVideoData(null);
+
+    try {
+      const res = await fetch(`/api/info?url=${encodeURIComponent(url)}`);
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to fetch video information');
+      }
+
+      setVideoData(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.js file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <main style={{ maxWidth: '900px', margin: '0 auto', padding: '64px 24px', width: '100%' }}>
+      <div style={{ textAlign: 'center', marginBottom: '48px' }} className="animate-fade-in">
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+          <div style={{ background: 'var(--accent-color)', padding: '12px', borderRadius: '16px', display: 'flex', boxShadow: '0 8px 32px rgba(255,0,80,0.4)' }}>
+            <Download size={32} color="white" />
+          </div>
+          <h1 style={{ fontSize: '3rem', fontWeight: '700', letterSpacing: '-1px' }}>AnyDown</h1>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+        <p style={{ fontSize: '1.2rem', color: 'rgba(255,255,255,0.7)', maxWidth: '500px', margin: '0 auto' }}>
+          Download YouTube videos in high quality. Fast, free, and secure.
+        </p>
+      </div>
+
+      <div className="glass animate-fade-in" style={{ padding: '8px', animationDelay: '0.1s' }}>
+        <form onSubmit={handleSearch} style={{ display: 'flex', gap: '8px' }}>
+          <div style={{ position: 'relative', flex: '1' }}>
+            <div style={{ position: 'absolute', left: '20px', top: '50%', transform: 'translateY(-50%)', opacity: 0.5, pointerEvents: 'none' }}>
+              <Search size={20} />
+            </div>
+            <input
+              type="text"
+              placeholder="Paste YouTube link here..."
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              className="input-field"
+              style={{ paddingLeft: '52px' }}
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+          </div>
+          <button type="submit" className="primary-btn" disabled={loading || !url.trim()}>
+            {loading ? 'Searching...' : 'Search'}
+          </button>
+        </form>
+      </div>
+
+      {loading && <Loader />}
+
+      {error && (
+        <div className="animate-fade-in" style={{ 
+          marginTop: '24px', 
+          padding: '16px 24px', 
+          background: 'rgba(255, 0, 0, 0.1)', 
+          border: '1px solid rgba(255, 0, 0, 0.2)', 
+          borderRadius: '16px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          color: '#ff6b6b'
+        }}>
+          <AlertCircle size={20} />
+          {error}
         </div>
-      </main>
-    </div>
+      )}
+
+      {videoData && (
+        <VideoInfo videoData={videoData} url={url} />
+      )}
+    </main>
   );
 }
