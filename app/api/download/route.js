@@ -1,4 +1,4 @@
-import ytdl from '@distube/ytdl-core';
+import play from 'play-dl';
 import { NextResponse } from 'next/server';
 
 export async function GET(req) {
@@ -8,59 +8,48 @@ export async function GET(req) {
     const itag = searchParams.get('itag');
     const title = searchParams.get('title') || 'video';
 
-    if (!url || !ytdl.validateURL(url) || !itag) {
+    if (!url || !itag) {
       return NextResponse.json(
         { error: 'Invalid parameters' },
         { status: 400 }
       );
     }
 
-    const info = await ytdl.getInfo(url);
-    const format = ytdl.chooseFormat(info.formats, { quality: itag });
+    const info = await play.video_info(url);
+    const format = info.format.find(f => f.itag === parseInt(itag));
 
-    if (!format) {
+    if (!format || !format.url) {
       return NextResponse.json(
-        { error: 'Format not found' },
+        { error: 'Format not found or URL missing' },
         { status: 404 }
       );
     }
 
     // Determine content type and file extension
     const contentType = format.mimeType?.split(';')[0] || 'application/octet-stream';
-    const extension = format.container || 'mp4';
+    const extension = format.container || (contentType.includes('video') ? 'mp4' : 'webm');
+    
     // Remove non-ascii and special chars from filename
     const safeTitle = title.replace(/[^\w\s-]/gi, '').trim().replace(/\s+/g, '_');
     const filename = `${safeTitle}.${extension}`;
 
-    // Create a web stream from the node stream
-    const ytdlStream = ytdl(url, { format });
-    
-    const stream = new ReadableStream({
-      start(controller) {
-        ytdlStream.on('data', (chunk) => {
-          controller.enqueue(new Uint8Array(chunk));
-        });
-        ytdlStream.on('end', () => {
-          controller.close();
-        });
-        ytdlStream.on('error', (err) => {
-          console.error('Download stream error:', err);
-          controller.error(err);
-        });
-      },
-      cancel() {
-        ytdlStream.destroy();
-      }
-    });
+    // Fetch the stream from Google's servers
+    const response = await fetch(format.url);
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch from YouTube: ${response.statusText}`);
+    }
 
     const headers = new Headers();
     headers.set('Content-Type', contentType);
     headers.set('Content-Disposition', `attachment; filename="${filename}"`);
     if (format.contentLength) {
       headers.set('Content-Length', format.contentLength);
+    } else if (response.headers.get('content-length')) {
+      headers.set('Content-Length', response.headers.get('content-length'));
     }
 
-    return new NextResponse(stream, {
+    return new NextResponse(response.body, {
       status: 200,
       headers
     });
@@ -68,7 +57,7 @@ export async function GET(req) {
   } catch (error) {
     console.error('Download error:', error);
     return NextResponse.json(
-      { error: 'Failed to process download.' },
+      { error: 'Failed to process download. ' + error.message },
       { status: 500 }
     );
   }

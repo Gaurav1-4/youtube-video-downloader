@@ -1,4 +1,4 @@
-import ytdl from '@distube/ytdl-core';
+import play from 'play-dl';
 import { NextResponse } from 'next/server';
 
 export async function GET(req) {
@@ -6,45 +6,45 @@ export async function GET(req) {
     const { searchParams } = new URL(req.url);
     const url = searchParams.get('url');
 
-    if (!url || !ytdl.validateURL(url)) {
+    if (!url) {
       return NextResponse.json(
         { error: 'Invalid or missing YouTube URL' },
         { status: 400 }
       );
     }
 
-    const info = await ytdl.getInfo(url);
+    // Attempt to get video info
+    const info = await play.video_info(url);
+    const details = info.video_details;
     
-    // Extract required data
-    const title = info.videoDetails.title;
-    const thumbnail = info.videoDetails.thumbnails[info.videoDetails.thumbnails.length - 1]?.url;
-    const author = info.videoDetails.author.name;
-    const lengthSeconds = info.videoDetails.lengthSeconds;
+    // Extract basic info
+    const title = details.title;
+    const thumbnail = details.thumbnails && details.thumbnails.length > 0 
+      ? details.thumbnails[details.thumbnails.length - 1].url 
+      : '';
+    const author = details.channel?.name || 'Unknown Author';
+    const lengthSeconds = details.durationInSec;
     
-    // Filter formats for video and audio
-    // We try to grab the best formats that have both video and audio (if possible)
-    // Or we provide separate video and audio formats. Usually, the highest qualities are video-only or audio-only,
-    // requiring muxing. For simplicity in a pure Node.js stream without FFmpeg, we will filter for formats with both,
-    // or just allow users to download video-only / audio-only streams directly.
-    const formats = info.formats
-      .filter((format) => format.hasVideo || format.hasAudio)
-      .map((format) => ({
-        itag: format.itag,
-        qualityLabel: format.qualityLabel,
-        mimeType: format.mimeType,
-        hasVideo: format.hasVideo,
-        hasAudio: format.hasAudio,
-        container: format.container,
-        contentLength: format.contentLength,
-        url: format.url // sometimes direct url can be used
-      }))
-      .sort((a, b) => {
-        if (a.hasVideo && a.hasAudio && (!b.hasVideo || !b.hasAudio)) return -1;
-        if (!a.hasVideo && !a.hasAudio && (b.hasVideo || b.hasAudio)) return 1;
-        return 0;
-      });
+    // play-dl formats
+    const formats = info.format.map(f => {
+      const isVideo = f.mimeType && f.mimeType.includes('video');
+      const isAudio = f.mimeType && f.mimeType.includes('audio');
+      // For play-dl, if it has qualityLabel it's video. If it has audioQuality it has audio.
+      const hasVideo = !!f.qualityLabel;
+      const hasAudio = !!f.audioQuality || (!hasVideo && isAudio);
 
-    // Grouping for better UI representation
+      return {
+        itag: f.itag,
+        qualityLabel: f.qualityLabel || 'Audio',
+        mimeType: f.mimeType,
+        hasVideo: hasVideo,
+        hasAudio: hasAudio,
+        container: f.container || (isVideo ? 'mp4' : 'webm'),
+        contentLength: f.contentLength,
+        url: f.url
+      };
+    });
+
     const videoWithAudio = formats.filter(f => f.hasVideo && f.hasAudio);
     const videoOnly = formats.filter(f => f.hasVideo && !f.hasAudio);
     const audioOnly = formats.filter(f => !f.hasVideo && f.hasAudio);
@@ -61,7 +61,7 @@ export async function GET(req) {
       }
     });
   } catch (error) {
-    console.error('Error fetching video info:', error);
+    console.error('Error fetching video info with play-dl:', error);
     return NextResponse.json(
       { error: 'Failed to fetch video information. It might be restricted or private.' },
       { status: 500 }
