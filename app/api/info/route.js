@@ -1,4 +1,3 @@
-import play from 'play-dl';
 import { NextResponse } from 'next/server';
 
 export async function GET(req) {
@@ -6,48 +5,73 @@ export async function GET(req) {
     const { searchParams } = new URL(req.url);
     const url = searchParams.get('url');
 
-    if (!url) {
-      return NextResponse.json(
-        { error: 'Invalid or missing YouTube URL' },
-        { status: 400 }
-      );
-    }
-
-    // Attempt to get video info
-    const info = await play.video_info(url);
-    const details = info.video_details;
+    const getVideoId = (u) => {
+      try {
+        const parsed = new URL(u);
+        if (parsed.hostname.includes('youtube.com')) return parsed.searchParams.get('v');
+        if (parsed.hostname.includes('youtu.be')) return parsed.pathname.slice(1);
+      } catch(e) {}
+      return null;
+    };
     
-    // Extract basic info
-    const title = details.title;
-    const thumbnail = details.thumbnails && details.thumbnails.length > 0 
-      ? details.thumbnails[details.thumbnails.length - 1].url 
-      : '';
-    const author = details.channel?.name || 'Unknown Author';
-    const lengthSeconds = details.durationInSec;
-    
-    // play-dl formats
-    const formats = info.format.map(f => {
-      const isVideo = f.mimeType && f.mimeType.includes('video');
-      const isAudio = f.mimeType && f.mimeType.includes('audio');
-      // For play-dl, if it has qualityLabel it's video. If it has audioQuality it has audio.
-      const hasVideo = !!f.qualityLabel;
-      const hasAudio = !!f.audioQuality || (!hasVideo && isAudio);
+    const videoId = getVideoId(url);
+    if (!videoId) return NextResponse.json({error: 'Invalid URL'}, {status: 400});
 
-      return {
-        itag: f.itag,
-        qualityLabel: f.qualityLabel || 'Audio',
-        mimeType: f.mimeType,
-        hasVideo: hasVideo,
-        hasAudio: hasAudio,
-        container: f.container || (isVideo ? 'mp4' : 'webm'),
-        contentLength: f.contentLength,
-        url: f.url
-      };
+    const response = await fetch(`https://youtube-media-downloader.p.rapidapi.com/v2/video/details?videoId=${videoId}`, {
+      headers: {
+        'x-rapidapi-host': 'youtube-media-downloader.p.rapidapi.com',
+        'x-rapidapi-key': '317871f23fmshc0f05cc41c39675p1b4264jsn6b97536679aa'
+      }
     });
 
-    const videoWithAudio = formats.filter(f => f.hasVideo && f.hasAudio);
-    const videoOnly = formats.filter(f => f.hasVideo && !f.hasAudio);
-    const audioOnly = formats.filter(f => !f.hasVideo && f.hasAudio);
+    if (!response.ok) {
+      throw new Error('RapidAPI fetch failed: ' + response.statusText);
+    }
+    const data = await response.json();
+
+    const title = data.title;
+    const thumbnail = data.thumbnails && data.thumbnails.length > 0 ? data.thumbnails[data.thumbnails.length - 1].url : '';
+    const author = data.channel?.name || 'Unknown Author';
+    const lengthSeconds = data.lengthSeconds;
+
+    // Map RapidAPI formats
+    // RapidAPI returns audios.items and videos.items
+    const videoWithAudio = [];
+    const videoOnly = [];
+    const audioOnly = [];
+
+    if (data.videos && data.videos.items) {
+      data.videos.items.forEach(v => {
+        const formatObj = {
+          itag: Buffer.from(v.url).toString('base64'), // Pass URL safely as base64
+          qualityLabel: v.quality,
+          container: v.extension,
+          contentLength: v.size || 0,
+          hasVideo: true,
+          hasAudio: v.hasAudio,
+          url: v.url
+        };
+        if (v.hasAudio) {
+          videoWithAudio.push(formatObj);
+        } else {
+          videoOnly.push(formatObj);
+        }
+      });
+    }
+
+    if (data.audios && data.audios.items) {
+      data.audios.items.forEach(a => {
+        audioOnly.push({
+          itag: Buffer.from(a.url).toString('base64'),
+          qualityLabel: 'Audio',
+          container: a.extension,
+          contentLength: a.size || 0,
+          hasVideo: false,
+          hasAudio: true,
+          url: a.url
+        });
+      });
+    }
 
     return NextResponse.json({
       title,
@@ -61,9 +85,9 @@ export async function GET(req) {
       }
     });
   } catch (error) {
-    console.error('Error fetching video info with play-dl:', error);
+    console.error('Error fetching video info:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch video information. It might be restricted or private.' },
+      { error: 'Failed to fetch video information. ' + error.message },
       { status: 500 }
     );
   }
