@@ -1,7 +1,9 @@
-import { Download, Music, Video, Clock, User, HardDriveDownload } from 'lucide-react';
-import React from 'react';
+import { Download, Music, Video, Clock, User, HardDriveDownload, X, Info } from 'lucide-react';
+import React, { useState } from 'react';
 
 export default function VideoInfo({ videoData }) {
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedUrl, setSelectedUrl] = useState('');
   
   const formatDuration = (seconds) => {
     if (!seconds) return 'Unknown';
@@ -13,13 +15,15 @@ export default function VideoInfo({ videoData }) {
   };
 
   const handleDownload = (url) => {
-    // Route through our proxy API to force a direct download instead of playing in tab
-    const b64 = window.btoa(unescape(encodeURIComponent(url)));
-    window.location.href = `/api/download?itag=${encodeURIComponent(b64)}&title=${encodeURIComponent(videoData.title || 'video')}`;
+    // Because YouTube strictly blocks backend proxies with 403 Forbidden,
+    // we must open the raw URL in a new tab using the user's IP.
+    // To ensure good UX, we first show a modal explaining how to save it.
+    setSelectedUrl(url);
+    setModalOpen(true);
   };
 
   return (
-    <div className="glass animate-fade-in" style={{ padding: '32px', marginTop: '32px', display: 'flex', flexDirection: 'column', gap: '32px' }}>
+    <div className="glass animate-fade-in" style={{ padding: '32px', marginTop: '32px', display: 'flex', flexDirection: 'column', gap: '32px', position: 'relative' }}>
       
       {/* Top Section: Video Details */}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '24px' }}>
@@ -113,12 +117,88 @@ export default function VideoInfo({ videoData }) {
               Sorry, no direct download links are available for this specific video. Try a different video!
             </div>
           )}
-
         </div>
       </div>
       
+      {/* Instructions Modal */}
+      {modalOpen && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 9999,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'rgba(0, 0, 0, 0.7)',
+          backdropFilter: 'blur(8px)',
+          animation: 'fadeIn 0.2s ease-out'
+        }}>
+          <div style={{
+            background: 'rgba(15, 23, 42, 0.9)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: '24px',
+            padding: '32px',
+            maxWidth: '480px',
+            width: '90%',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+            position: 'relative'
+          }}>
+            <button 
+              onClick={() => setModalOpen(false)}
+              style={{ position: 'absolute', top: '24px', right: '24px', background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', padding: '4px' }}
+            >
+              <X size={24} />
+            </button>
+            
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
+              <div style={{ background: 'rgba(59, 130, 246, 0.2)', padding: '12px', borderRadius: '50%', color: '#60a5fa' }}>
+                <Download size={28} />
+              </div>
+              <h3 style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: 0 }}>Almost there!</h3>
+            </div>
+            
+            <div style={{ background: 'rgba(255,255,255,0.03)', padding: '20px', borderRadius: '16px', marginBottom: '24px', border: '1px solid rgba(255,255,255,0.05)' }}>
+              <p style={{ margin: 0, marginBottom: '16px', fontSize: '1.05rem', lineHeight: '1.5', color: 'rgba(255,255,255,0.9)' }}>
+                YouTube security blocks automated downloads. 
+                Your video will open securely in a new player tab.
+              </p>
+              
+              <ul style={{ margin: 0, paddingLeft: '24px', color: 'rgba(255,255,255,0.7)', lineHeight: '1.6' }}>
+                <li>Click the <strong>three dots (⋮)</strong> in the video player and select <strong>Download</strong></li>
+                <li>Or, simply <strong>Right-Click</strong> (or long-press) and select <strong>Save Video As...</strong></li>
+              </ul>
+            </div>
+            
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button 
+                onClick={() => setModalOpen(false)}
+                style={{ flex: 1, padding: '16px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: 'white', fontWeight: 'bold', cursor: 'pointer', fontSize: '1.05rem' }}
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={() => {
+                  window.open(selectedUrl, '_blank');
+                  setModalOpen(false);
+                }}
+                style={{ flex: 1, padding: '16px', borderRadius: '12px', border: 'none', background: 'linear-gradient(135deg, #3b82f6, #2563eb)', color: 'white', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)', fontSize: '1.05rem' }}
+              >
+                Open Player
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Styles injected specifically for these buttons to maintain the premium feel while staying perfectly clean */}
       <style dangerouslySetInnerHTML={{__html: `
+        @keyframes fadeIn {
+          from { opacity: 0; transform: scale(0.95); }
+          to { opacity: 1; transform: scale(1); }
+        }
         .download-btn {
           display: flex;
           justify-content: space-between;
