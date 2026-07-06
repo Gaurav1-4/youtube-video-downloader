@@ -5,7 +5,7 @@ import { redis } from '../lib/redis';
 import './globals.css';
 
 export const metadata = {
-  title: 'AnyDown | YouTube Video Downloader',
+  title: 'GrabYT | YouTube Video Downloader',
   description: 'A premium, fast, and secure tool to download YouTube videos directly to your device.',
 };
 

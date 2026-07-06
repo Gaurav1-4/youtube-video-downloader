@@ -46,7 +46,7 @@ export default function Home() {
           <div style={{ background: 'var(--accent-color)', padding: '12px', borderRadius: '16px', display: 'flex', boxShadow: '0 8px 32px rgba(255,0,80,0.4)' }}>
             <Download size={32} color="white" />
           </div>
-          <h1 style={{ fontSize: '3rem', fontWeight: '700', letterSpacing: '-1px' }}>AnyDown</h1>
+          <h1 style={{ fontSize: '3rem', fontWeight: '700', letterSpacing: '-1px' }}>GrabYT</h1>
         </div>
         <p style={{ fontSize: '1.2rem', color: 'rgba(255,255,255,0.7)', maxWidth: '500px', margin: '0 auto' }}>
           Download YouTube videos in high quality. Fast, free, and secure.
