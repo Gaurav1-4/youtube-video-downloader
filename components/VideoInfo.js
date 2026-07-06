@@ -13,8 +13,9 @@ export default function VideoInfo({ videoData }) {
   };
 
   const handleDownload = (url) => {
-    // Open in a new tab to let the browser handle the direct download link
-    window.open(url, '_blank');
+    // Route through our proxy API to force a direct download instead of playing in tab
+    const b64 = window.btoa(unescape(encodeURIComponent(url)));
+    window.location.href = `/api/download?itag=${encodeURIComponent(b64)}&title=${encodeURIComponent(videoData.title || 'video')}`;
   };
 
   return (
