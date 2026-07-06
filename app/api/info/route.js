@@ -14,48 +14,13 @@ async function fetchFromPrimaryAPI(videoId) {
   const data = await response.json();
 
   const title = data.title;
+  // Get highest quality thumbnail available
   const thumbnail = data.thumbnails && data.thumbnails.length > 0 ? data.thumbnails[data.thumbnails.length - 1].url : '';
   const author = data.channel?.name || 'Unknown Author';
   const lengthSeconds = data.lengthSeconds;
 
-  const videoWithAudio = [];
-  const videoOnly = [];
-  const audioOnly = [];
-
-  if (data.videos && data.videos.items) {
-    data.videos.items.forEach(v => {
-      const formatObj = {
-        itag: Buffer.from(v.url).toString('base64'),
-        qualityLabel: v.quality,
-        container: v.extension,
-        contentLength: v.size || 0,
-        hasVideo: true,
-        hasAudio: v.hasAudio,
-        url: v.url
-      };
-      if (v.hasAudio) {
-        videoWithAudio.push(formatObj);
-      } else {
-        videoOnly.push(formatObj);
-      }
-    });
-  }
-
-  if (data.audios && data.audios.items) {
-    data.audios.items.forEach(a => {
-      audioOnly.push({
-        itag: Buffer.from(a.url).toString('base64'),
-        qualityLabel: 'Audio',
-        container: a.extension,
-        contentLength: a.size || 0,
-        hasVideo: false,
-        hasAudio: true,
-        url: a.url
-      });
-    });
-  }
-
-  return { title, thumbnail, author, lengthSeconds, formats: { videoWithAudio, videoOnly, audioOnly } };
+  // We no longer fetch or map video/audio formats to save bandwidth and compute
+  return { title, thumbnail, author, lengthSeconds, formats: { videoWithAudio: [], videoOnly: [], audioOnly: [] } };
 }
 
 async function fetchFromFallbackAPI(videoId) {
@@ -65,7 +30,7 @@ async function fetchFromFallbackAPI(videoId) {
     'Content-Type': 'application/json'
   };
 
-  // 1. Get video details
+  // 1. Get video details (this is the ONLY request we make to save limits)
   const detailsRes = await fetch(`https://youtube-data16.p.rapidapi.com/videos?ids=${videoId}`, { headers });
   if (!detailsRes.ok) throw new Error('Fallback API details fetch failed');
   const detailsData = await detailsRes.json();
@@ -79,60 +44,16 @@ async function fetchFromFallbackAPI(videoId) {
   const author = videoInfo.channelTitle;
   const lengthSeconds = videoInfo.parsedDuration;
   
-  // Try to get maxres thumbnail, fallback to high
+  // Try to get maxres thumbnail, fallback to lower res if not available
   const thumbnailObj = videoInfo.thumbnails;
   let thumbnail = '';
   if (thumbnailObj) {
     thumbnail = thumbnailObj.maxres?.url || thumbnailObj.high?.url || thumbnailObj.medium?.url || thumbnailObj.default?.url || '';
   }
 
-  // 2. Get video files
-  const videoFilesRes = await fetch(`https://youtube-data16.p.rapidapi.com/files/video/${videoId}`, { headers });
-  const videoFiles = videoFilesRes.ok ? await videoFilesRes.json() : [];
-
-  // 3. Get audio files
-  const audioFilesRes = await fetch(`https://youtube-data16.p.rapidapi.com/files/audio/${videoId}`, { headers });
-  const audioFiles = audioFilesRes.ok ? await audioFilesRes.json() : [];
-
-  const videoWithAudio = [];
-  const videoOnly = [];
-  const audioOnly = [];
-
-  if (Array.isArray(videoFiles)) {
-    videoFiles.forEach(v => {
-      const isAudioAndVideo = !!v.audioQuality;
-      const formatObj = {
-        itag: Buffer.from(v.url).toString('base64'),
-        qualityLabel: v.qualityLabel || v.quality || 'Unknown',
-        container: v.mimeType ? v.mimeType.split(';')[0].split('/')[1] : 'mp4',
-        contentLength: v.contentLength || 0,
-        hasVideo: true,
-        hasAudio: isAudioAndVideo,
-        url: v.url
-      };
-      if (isAudioAndVideo) {
-        videoWithAudio.push(formatObj);
-      } else {
-        videoOnly.push(formatObj);
-      }
-    });
-  }
-
-  if (Array.isArray(audioFiles)) {
-    audioFiles.forEach(a => {
-      audioOnly.push({
-        itag: Buffer.from(a.url).toString('base64'),
-        qualityLabel: 'Audio',
-        container: a.mimeType ? a.mimeType.split(';')[0].split('/')[1] : 'mp3',
-        contentLength: a.contentLength || 0,
-        hasVideo: false,
-        hasAudio: true,
-        url: a.url
-      });
-    });
-  }
-
-  return { title, thumbnail, author, lengthSeconds, formats: { videoWithAudio, videoOnly, audioOnly } };
+  // We completely skip making the 2 extra API calls for video and audio files here!
+  // This triples the amount of searches you can do per day on the free limit.
+  return { title, thumbnail, author, lengthSeconds, formats: { videoWithAudio: [], videoOnly: [], audioOnly: [] } };
 }
 
 export async function GET(req) {
@@ -164,7 +85,7 @@ export async function GET(req) {
         return NextResponse.json(fallbackData);
       } catch (fallbackErr) {
         console.error('Fallback API also failed', fallbackErr.message);
-        throw new Error('All download APIs failed to retrieve the video.');
+        throw new Error('All APIs failed to retrieve the video thumbnail.');
       }
     }
   } catch (error) {
