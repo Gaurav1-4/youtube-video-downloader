@@ -1,3 +1,4 @@
+import { ClerkProvider } from '@clerk/nextjs';
 import './globals.css';
 
 export const metadata = {
@@ -9,11 +10,13 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body>
-        <div className="background-wrapper">
-          <div className="blob blob-1"></div>
-          <div className="blob blob-2"></div>
-        </div>
-        {children}
+        <ClerkProvider>
+          <div className="background-wrapper">
+            <div className="blob blob-1"></div>
+            <div className="blob blob-2"></div>
+          </div>
+          {children}
+        </ClerkProvider>
       </body>
     </html>
   );

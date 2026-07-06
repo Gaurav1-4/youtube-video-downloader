@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Search, Download, AlertCircle } from 'lucide-react';
 import VideoInfo from '../components/VideoInfo';
 import Loader from '../components/Loader';
+import { UserButton } from '@clerk/nextjs';
 
 export default function Home() {
   const [url, setUrl] = useState('');
@@ -36,7 +37,10 @@ export default function Home() {
   };
 
   return (
-    <main style={{ maxWidth: '900px', margin: '0 auto', padding: '64px 24px', width: '100%' }}>
+    <main style={{ maxWidth: '900px', margin: '0 auto', padding: '64px 24px', width: '100%', position: 'relative' }}>
+      <div style={{ position: 'absolute', top: '24px', right: '24px' }}>
+        <UserButton afterSignOutUrl="/" />
+      </div>
       <div style={{ textAlign: 'center', marginBottom: '48px' }} className="animate-fade-in">
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
           <div style={{ background: 'var(--accent-color)', padding: '12px', borderRadius: '16px', display: 'flex', boxShadow: '0 8px 32px rgba(255,0,80,0.4)' }}>
