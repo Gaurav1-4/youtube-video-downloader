@@ -4,16 +4,19 @@ import { useState } from 'react';
 import { Search, Download, AlertCircle } from 'lucide-react';
 import VideoInfo from '../components/VideoInfo';
 import Loader from '../components/Loader';
-import { UserButton } from '@clerk/nextjs';
+import { UserButton, useUser } from '@clerk/nextjs';
 import Link from 'next/link';
 
 import { SparklesCore } from '../components/ui/sparkles';
 
 export default function Home() {
+  const { user } = useUser();
   const [url, setUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [videoData, setVideoData] = useState(null);
+
+  const isAdmin = user?.primaryEmailAddress?.emailAddress === 'gauravgoyal2112007@gmail.com';
 
   const handleSearch = async (e) => {
     e.preventDefault();
@@ -42,9 +45,11 @@ export default function Home() {
   return (
     <main style={{ maxWidth: '900px', margin: '0 auto', padding: '64px 24px', width: '100%', position: 'relative' }}>
       <header style={{ width: '100%', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '16px', marginBottom: '32px', zIndex: 50 }}>
-        <Link href="/admin" className="hover:text-white" style={{ color: 'rgba(255,255,255,0.7)', textDecoration: 'none', fontSize: '0.9rem', transition: 'color 0.2s' }}>
-          Admin Dashboard
-        </Link>
+        {isAdmin && (
+          <Link href="/admin" className="hover:text-white" style={{ color: 'rgba(255,255,255,0.7)', textDecoration: 'none', fontSize: '0.9rem', transition: 'color 0.2s' }}>
+            Admin Dashboard
+          </Link>
+        )}
         <UserButton afterSignOutUrl="/" />
       </header>
 
