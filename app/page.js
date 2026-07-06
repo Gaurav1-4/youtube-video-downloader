@@ -41,12 +41,12 @@ export default function Home() {
 
   return (
     <main style={{ maxWidth: '900px', margin: '0 auto', padding: '64px 24px', width: '100%', position: 'relative' }}>
-      <div style={{ position: 'absolute', top: '24px', right: '24px', zIndex: 50, display: 'flex', alignItems: 'center', gap: '16px' }}>
+      <header style={{ width: '100%', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '16px', marginBottom: '32px', zIndex: 50 }}>
         <Link href="/admin" className="hover:text-white" style={{ color: 'rgba(255,255,255,0.7)', textDecoration: 'none', fontSize: '0.9rem', transition: 'color 0.2s' }}>
           Admin Dashboard
         </Link>
         <UserButton afterSignOutUrl="/" />
-      </div>
+      </header>
 
       <div style={{ 
         width: '100%', 
@@ -60,8 +60,8 @@ export default function Home() {
         
         <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '16px', zIndex: 10 }}>
-            <div style={{ background: 'var(--accent-color)', padding: '14px', borderRadius: '18px', display: 'flex', boxShadow: '0 8px 32px rgba(255,0,80,0.5)' }}>
-              <Download size={36} color="white" />
+            <div className="logo-icon-container" style={{ background: 'var(--accent-color)', padding: '14px', borderRadius: '18px', display: 'flex', boxShadow: '0 8px 32px rgba(255,0,80,0.5)' }}>
+              <Download className="logo-icon" size={36} color="white" />
             </div>
             <h1 className="brand-title" style={{ fontSize: '4.5rem', fontWeight: '800', letterSpacing: '-2px', color: '#fff', margin: 0 }}>ZoraYT</h1>
           </div>
@@ -107,8 +107,8 @@ export default function Home() {
           left: 0, 
           width: '100%', 
           height: '100%', 
-          WebkitMaskImage: 'radial-gradient(350px 200px at top center, black, transparent)', 
-          maskImage: 'radial-gradient(350px 200px at top center, black, transparent)' 
+          WebkitMaskImage: 'radial-gradient(circle at top center, black 0%, transparent 70%)', 
+          maskImage: 'radial-gradient(circle at top center, black 0%, transparent 70%)' 
         }}>
           <SparklesCore
             background="transparent"
