@@ -59,34 +59,9 @@ export default function Home() {
             <div style={{ background: 'var(--accent-color)', padding: '14px', borderRadius: '18px', display: 'flex', boxShadow: '0 8px 32px rgba(255,0,80,0.5)' }}>
               <Download size={36} color="white" />
             </div>
-            <h1 style={{ fontSize: '4.5rem', fontWeight: '800', letterSpacing: '-2px', color: '#fff', margin: 0 }}>GrabYT</h1>
+            <h1 style={{ fontSize: '4.5rem', fontWeight: '800', letterSpacing: '-2px', color: '#fff', margin: 0 }}>ZoraYT</h1>
           </div>
-          
-          {/* Sparkles Core & Glowing Line */}
-          <div style={{ width: '40rem', height: '40px', position: 'relative' }}>
-            {/* Gradients */}
-            <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: '75%', height: '2px', background: 'linear-gradient(90deg, transparent, rgba(255,0,80,0.8), transparent)', filter: 'blur(2px)' }} />
-            <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: '75%', height: '1px', background: 'linear-gradient(90deg, transparent, rgba(255,0,80,0.8), transparent)' }} />
-            <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: '25%', height: '5px', background: 'linear-gradient(90deg, transparent, rgba(255,0,80,1), transparent)', filter: 'blur(4px)' }} />
-            <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: '25%', height: '2px', background: 'linear-gradient(90deg, transparent, rgba(255,0,80,1), transparent)' }} />
-
-            {/* Core component */}
-            <div style={{ position: 'absolute', top: '2px', left: 0, width: '100%', height: '100%' }}>
-              <SparklesCore
-                background="transparent"
-                minSize={0.4}
-                maxSize={1.5}
-                particleDensity={1200}
-                className="w-full h-full"
-                particleColor="#FFFFFF"
-              />
-            </div>
-
-            {/* Radial Gradient to prevent sharp edges */}
-            <div style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', background: 'radial-gradient(ellipse at center, transparent 20%, #000 100%)' }} />
-          </div>
-
-          <p style={{ fontSize: '1.2rem', color: 'rgba(255,255,255,0.7)', maxWidth: '500px', margin: '16px auto 0', textAlign: 'center', zIndex: 10 }}>
+          <p style={{ fontSize: '1.2rem', color: 'rgba(255,255,255,0.7)', maxWidth: '500px', margin: '24px auto 0', textAlign: 'center', zIndex: 10 }}>
             Download YouTube videos in high quality. Fast, free, and secure.
           </p>
         </div>
@@ -111,6 +86,30 @@ export default function Home() {
             {loading ? 'Searching...' : 'Search'}
           </button>
         </form>
+      </div>
+
+      {/* Sparkles Core & Glowing Line moved below the search bar */}
+      <div style={{ width: '40rem', height: '40px', position: 'relative', margin: '16px auto 0', zIndex: 0 }}>
+        {/* Gradients */}
+        <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: '75%', height: '2px', background: 'linear-gradient(90deg, transparent, rgba(255,0,80,0.8), transparent)', filter: 'blur(2px)' }} />
+        <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: '75%', height: '1px', background: 'linear-gradient(90deg, transparent, rgba(255,0,80,0.8), transparent)' }} />
+        <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: '25%', height: '5px', background: 'linear-gradient(90deg, transparent, rgba(255,0,80,1), transparent)', filter: 'blur(4px)' }} />
+        <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: '25%', height: '2px', background: 'linear-gradient(90deg, transparent, rgba(255,0,80,1), transparent)' }} />
+
+        {/* Core component */}
+        <div style={{ position: 'absolute', top: '2px', left: 0, width: '100%', height: '100%' }}>
+          <SparklesCore
+            background="transparent"
+            minSize={0.4}
+            maxSize={1.5}
+            particleDensity={1200}
+            className="w-full h-full"
+            particleColor="#FFFFFF"
+          />
+        </div>
+
+        {/* Radial Gradient to prevent sharp edges */}
+        <div style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', background: 'radial-gradient(ellipse at center, transparent 20%, #000 100%)' }} />
       </div>
 
       {loading && <Loader />}
