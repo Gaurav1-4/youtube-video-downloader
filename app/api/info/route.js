@@ -1,55 +1,71 @@
 import { NextResponse } from 'next/server';
 
-async function fetchFromPrimaryAPI(videoId) {
-  // We use youtube-info-download-api as the primary now because it has a massive 500,000 req/mo (500 units/day) limit!
-  const response = await fetch(`https://youtube-info-download-api.p.rapidapi.com/ajax/api.php?function=i&u=https%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3D${videoId}`, {
+async function fetchFromYTStream(videoId) {
+  const response = await fetch(`https://ytstream-download-youtube-videos.p.rapidapi.com/dl?id=${videoId}`, {
     headers: {
-      'x-rapidapi-host': 'youtube-info-download-api.p.rapidapi.com',
+      'x-rapidapi-host': 'ytstream-download-youtube-videos.p.rapidapi.com',
       'x-rapidapi-key': '317871f23fmshc0f05cc41c39675p1b4264jsn6b97536679aa'
     }
   });
 
   if (!response.ok) {
-    throw new Error('Primary API fetch failed: ' + response.statusText);
+    throw new Error('YTStream API fetch failed: ' + response.statusText);
   }
   const data = await response.json();
 
-  if (!data.title || !data.thumbnail) {
-    throw new Error('Invalid response from Primary API');
+  if (data.status !== 'OK' || !data.title) {
+    throw new Error('Invalid response from YTStream API');
   }
 
-  // We upgrade the thumbnail to maxresdefault if possible
-  const hqThumbnail = data.thumbnail;
+  // Upgrade the thumbnail if possible
+  const hqThumbnail = data.thumbnailUrl || `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
   const maxResThumbnail = hqThumbnail.replace('hqdefault.jpg', 'maxresdefault.jpg');
+
+  const videoWithAudio = [];
+  const audioOnly = [];
+  
+  if (data.formats && Array.isArray(data.formats)) {
+    data.formats.forEach(f => {
+      // Formats array usually contains video+audio combined streams
+      if (f.url) {
+        videoWithAudio.push({
+          qualityLabel: f.qualityLabel || 'Unknown',
+          url: f.url,
+          mimeType: f.mimeType || 'video/mp4'
+        });
+      }
+    });
+  }
+
+  if (data.adaptiveFormats && Array.isArray(data.adaptiveFormats)) {
+    data.adaptiveFormats.forEach(f => {
+      if (f.url && f.mimeType?.includes('audio/mp4')) {
+        audioOnly.push({
+          qualityLabel: f.audioQuality === 'AUDIO_QUALITY_MEDIUM' ? 'High' : 'Medium',
+          url: f.url,
+          mimeType: f.mimeType
+        });
+      }
+    });
+  }
+  
+  // Sort so highest quality is first
+  const sortQuality = (a, b) => {
+    const qA = parseInt(a.qualityLabel) || 0;
+    const qB = parseInt(b.qualityLabel) || 0;
+    return qB - qA;
+  };
 
   return { 
     title: data.title, 
     thumbnail: maxResThumbnail, 
     author: data.author || 'Unknown Author', 
-    lengthSeconds: 0, 
-    formats: { videoWithAudio: [], videoOnly: [], audioOnly: [] } 
+    lengthSeconds: parseInt(data.lengthSeconds) || 0, 
+    formats: { 
+      videoWithAudio: videoWithAudio.sort(sortQuality), 
+      audioOnly 
+    } 
   };
-}
-
-async function fetchFromFallbackAPI(videoId) {
-  // youtube-media-downloader (100/month limit) serves as a great fallback
-  const response = await fetch(`https://youtube-media-downloader.p.rapidapi.com/v2/video/details?videoId=${videoId}`, {
-    headers: {
-      'x-rapidapi-host': 'youtube-media-downloader.p.rapidapi.com',
-      'x-rapidapi-key': '317871f23fmshc0f05cc41c39675p1b4264jsn6b97536679aa'
-    }
-  });
-
-  if (!response.ok) {
-    throw new Error('Fallback API fetch failed: ' + response.statusText);
-  }
-  const data = await response.json();
-
-  const title = data.title;
-  const thumbnail = data.thumbnails && data.thumbnails.length > 0 ? data.thumbnails[data.thumbnails.length - 1].url : '';
-  const author = data.channel?.name || 'Unknown Author';
-  
-  return { title, thumbnail, author, lengthSeconds: 0, formats: { videoWithAudio: [], videoOnly: [], audioOnly: [] } };
 }
 
 export async function GET(req) {
@@ -69,21 +85,10 @@ export async function GET(req) {
     const videoId = getVideoId(url);
     if (!videoId) return NextResponse.json({error: 'Invalid URL'}, {status: 400});
 
-    try {
-      console.log('Attempting Primary API (youtube-info-download-api)...');
-      const primaryData = await fetchFromPrimaryAPI(videoId);
-      return NextResponse.json(primaryData);
-    } catch (primaryErr) {
-      console.error('Primary API failed, falling back...', primaryErr.message);
-      try {
-        console.log('Attempting Fallback API (youtube-media-downloader)...');
-        const fallbackData = await fetchFromFallbackAPI(videoId);
-        return NextResponse.json(fallbackData);
-      } catch (fallbackErr) {
-        console.error('Fallback API also failed', fallbackErr.message);
-        throw new Error('All APIs failed to retrieve the video thumbnail.');
-      }
-    }
+    console.log('Attempting YTStream API...');
+    const videoData = await fetchFromYTStream(videoId);
+    return NextResponse.json(videoData);
+
   } catch (error) {
     console.error('Error fetching video info:', error);
     return NextResponse.json(
