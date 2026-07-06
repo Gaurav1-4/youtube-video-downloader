@@ -170,8 +170,8 @@ export default function VideoInfo({ videoData }) {
               </p>
               
               <ul style={{ margin: 0, paddingLeft: '24px', color: 'rgba(255,255,255,0.7)', lineHeight: '1.6' }}>
-                <li>Click the <strong>three dots (⋮)</strong> in the video player and select <strong>Download</strong></li>
-                <li>Or, simply <strong>Right-Click</strong> (or long-press) and select <strong>Save Video As...</strong></li>
+                <li><strong>PC / Android:</strong> Click the <strong>three dots (⋮)</strong> in the video player and select <strong>Download</strong>, or right-click to save.</li>
+                <li><strong>iPhone / iPad:</strong> Long-press the <strong>Open Player</strong> button below and select <strong>Download Linked File</strong>. Or use the Safari Share icon.</li>
               </ul>
             </div>
             
@@ -182,15 +182,15 @@ export default function VideoInfo({ videoData }) {
               >
                 Cancel
               </button>
-              <button 
-                onClick={() => {
-                  window.open(selectedUrl, '_blank');
-                  setModalOpen(false);
-                }}
-                style={{ flex: 1, padding: '16px', borderRadius: '12px', border: 'none', background: 'linear-gradient(135deg, #3b82f6, #2563eb)', color: 'white', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)', fontSize: '1.05rem' }}
+              <a 
+                href={selectedUrl}
+                target="_blank"
+                rel="noreferrer"
+                onClick={() => setModalOpen(false)}
+                style={{ flex: 1, padding: '16px', borderRadius: '12px', border: 'none', background: 'linear-gradient(135deg, #3b82f6, #2563eb)', color: 'white', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)', fontSize: '1.05rem', textAlign: 'center', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               >
                 Open Player
-              </button>
+              </a>
             </div>
           </div>
         </div>
