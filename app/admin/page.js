@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useUser } from '@clerk/nextjs';
-import { ShieldAlert, UserPlus, Trash2, ShieldCheck, Loader2 } from 'lucide-react';
+import { ShieldAlert, UserPlus, Trash2, ShieldCheck, Loader2, HardDriveDownload } from 'lucide-react';
 
 const ADMIN_EMAIL = 'gauravgoyal2112007@gmail.com';
 
@@ -13,14 +13,28 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [totalDownloads, setTotalDownloads] = useState(0);
 
   useEffect(() => {
     if (isLoaded && user?.primaryEmailAddress?.emailAddress === ADMIN_EMAIL) {
       fetchEmails();
+      fetchStats();
     } else if (isLoaded) {
       setLoading(false);
     }
   }, [user, isLoaded]);
+
+  const fetchStats = async () => {
+    try {
+      const res = await fetch('/api/admin/stats');
+      if (res.ok) {
+        const data = await res.json();
+        setTotalDownloads(data.totalDownloads || 0);
+      }
+    } catch (err) {
+      console.error('Failed to fetch stats', err);
+    }
+  };
 
   const fetchEmails = async () => {
     try {
@@ -111,6 +125,17 @@ export default function AdminDashboard() {
         <div>
           <h1 style={{ fontSize: '2.5rem', fontWeight: '700', letterSpacing: '-1px' }}>Security Admin</h1>
           <p style={{ color: 'rgba(255,255,255,0.6)' }}>Manage exactly who can access your application.</p>
+        </div>
+      </div>
+
+      <div className="glass animate-fade-in" style={{ padding: '32px', marginBottom: '32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h2 style={{ fontSize: '1.2rem', color: 'rgba(255,255,255,0.7)', margin: 0 }}>Total Usage</h2>
+          <div style={{ fontSize: '3rem', fontWeight: 'bold', color: 'var(--accent-color)' }}>{totalDownloads}</div>
+          <div style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.5)' }}>Videos Downloaded</div>
+        </div>
+        <div style={{ padding: '24px', background: 'rgba(255,0,80,0.1)', borderRadius: '50%' }}>
+          <HardDriveDownload size={48} color="var(--accent-color)" />
         </div>
       </div>
 

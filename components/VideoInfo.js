@@ -15,6 +15,9 @@ export default function VideoInfo({ videoData }) {
   };
 
   const handleDownload = (url) => {
+    // Silently track download usage
+    fetch('/api/track', { method: 'POST' }).catch(() => {});
+    
     // Because YouTube strictly blocks backend proxies with 403 Forbidden,
     // we must open the raw URL in a new tab using the user's IP.
     // To ensure good UX, we first show a modal explaining how to save it.

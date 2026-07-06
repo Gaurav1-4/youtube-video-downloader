@@ -63,7 +63,7 @@ export default function Home() {
             <div style={{ background: 'var(--accent-color)', padding: '14px', borderRadius: '18px', display: 'flex', boxShadow: '0 8px 32px rgba(255,0,80,0.5)' }}>
               <Download size={36} color="white" />
             </div>
-            <h1 style={{ fontSize: '4.5rem', fontWeight: '800', letterSpacing: '-2px', color: '#fff', margin: 0 }}>ZoraYT</h1>
+            <h1 className="brand-title" style={{ fontSize: '4.5rem', fontWeight: '800', letterSpacing: '-2px', color: '#fff', margin: 0 }}>ZoraYT</h1>
           </div>
           <p style={{ fontSize: '1.2rem', color: 'rgba(255,255,255,0.7)', maxWidth: '500px', margin: '24px auto 0', textAlign: 'center', zIndex: 10 }}>
             Download YouTube videos in high quality. Fast, free, and secure.
@@ -72,7 +72,7 @@ export default function Home() {
       </div>
 
       <div className="glass animate-fade-in" style={{ padding: '8px', animationDelay: '0.1s' }}>
-        <form onSubmit={handleSearch} style={{ display: 'flex', gap: '8px' }}>
+        <form onSubmit={handleSearch} className="search-form" style={{ display: 'flex', gap: '8px' }}>
           <div style={{ position: 'relative', flex: '1' }}>
             <div style={{ position: 'absolute', left: '20px', top: '50%', transform: 'translateY(-50%)', opacity: 0.5, pointerEvents: 'none' }}>
               <Search size={20} />
@@ -93,7 +93,7 @@ export default function Home() {
       </div>
 
       {/* Sparkles Core & Glowing Line moved below the search bar */}
-      <div style={{ width: '40rem', height: '200px', position: 'relative', margin: '0 auto', zIndex: 0 }}>
+      <div className="sparkles-container" style={{ width: '40rem', height: '200px', position: 'relative', margin: '0 auto', zIndex: 0 }}>
         {/* Gradients */}
         <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: '75%', height: '2px', background: 'linear-gradient(90deg, transparent, rgba(255,0,80,0.8), transparent)', filter: 'blur(2px)' }} />
         <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: '75%', height: '1px', background: 'linear-gradient(90deg, transparent, rgba(255,0,80,0.8), transparent)' }} />
