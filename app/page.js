@@ -5,6 +5,7 @@ import { Search, Download, AlertCircle } from 'lucide-react';
 import VideoInfo from '../components/VideoInfo';
 import Loader from '../components/Loader';
 import { UserButton } from '@clerk/nextjs';
+import Link from 'next/link';
 
 import { SparklesCore } from '../components/ui/sparkles';
 
@@ -40,7 +41,10 @@ export default function Home() {
 
   return (
     <main style={{ maxWidth: '900px', margin: '0 auto', padding: '64px 24px', width: '100%', position: 'relative' }}>
-      <div style={{ position: 'absolute', top: '24px', right: '24px', zIndex: 50 }}>
+      <div style={{ position: 'absolute', top: '24px', right: '24px', zIndex: 50, display: 'flex', alignItems: 'center', gap: '16px' }}>
+        <Link href="/admin" className="hover:text-white" style={{ color: 'rgba(255,255,255,0.7)', textDecoration: 'none', fontSize: '0.9rem', transition: 'color 0.2s' }}>
+          Admin Dashboard
+        </Link>
         <UserButton afterSignOutUrl="/" />
       </div>
 
@@ -89,7 +93,7 @@ export default function Home() {
       </div>
 
       {/* Sparkles Core & Glowing Line moved below the search bar */}
-      <div style={{ width: '40rem', height: '40px', position: 'relative', margin: '16px auto 0', zIndex: 0 }}>
+      <div style={{ width: '40rem', height: '200px', position: 'relative', margin: '0 auto', zIndex: 0 }}>
         {/* Gradients */}
         <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: '75%', height: '2px', background: 'linear-gradient(90deg, transparent, rgba(255,0,80,0.8), transparent)', filter: 'blur(2px)' }} />
         <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: '75%', height: '1px', background: 'linear-gradient(90deg, transparent, rgba(255,0,80,0.8), transparent)' }} />
@@ -97,7 +101,15 @@ export default function Home() {
         <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: '25%', height: '2px', background: 'linear-gradient(90deg, transparent, rgba(255,0,80,1), transparent)' }} />
 
         {/* Core component */}
-        <div style={{ position: 'absolute', top: '2px', left: 0, width: '100%', height: '100%' }}>
+        <div style={{ 
+          position: 'absolute', 
+          top: '2px', 
+          left: 0, 
+          width: '100%', 
+          height: '100%', 
+          WebkitMaskImage: 'radial-gradient(350px 200px at top center, black, transparent)', 
+          maskImage: 'radial-gradient(350px 200px at top center, black, transparent)' 
+        }}>
           <SparklesCore
             background="transparent"
             minSize={0.4}
@@ -107,9 +119,6 @@ export default function Home() {
             particleColor="#FFFFFF"
           />
         </div>
-
-        {/* Radial Gradient to prevent sharp edges */}
-        <div style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', background: 'radial-gradient(ellipse at center, transparent 20%, #000 100%)' }} />
       </div>
 
       {loading && <Loader />}
