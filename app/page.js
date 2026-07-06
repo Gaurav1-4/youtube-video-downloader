@@ -6,6 +6,8 @@ import VideoInfo from '../components/VideoInfo';
 import Loader from '../components/Loader';
 import { UserButton } from '@clerk/nextjs';
 
+import { SparklesCore } from '../components/ui/sparkles';
+
 export default function Home() {
   const [url, setUrl] = useState('');
   const [loading, setLoading] = useState(false);
@@ -38,19 +40,56 @@ export default function Home() {
 
   return (
     <main style={{ maxWidth: '900px', margin: '0 auto', padding: '64px 24px', width: '100%', position: 'relative' }}>
-      <div style={{ position: 'absolute', top: '24px', right: '24px' }}>
+      <div style={{ position: 'absolute', top: '24px', right: '24px', zIndex: 50 }}>
         <UserButton afterSignOutUrl="/" />
       </div>
-      <div style={{ textAlign: 'center', marginBottom: '48px' }} className="animate-fade-in">
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-          <div style={{ background: 'var(--accent-color)', padding: '12px', borderRadius: '16px', display: 'flex', boxShadow: '0 8px 32px rgba(255,0,80,0.4)' }}>
-            <Download size={32} color="white" />
+
+      <div style={{ 
+        width: '100%', 
+        display: 'flex', 
+        flexDirection: 'column', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        marginBottom: '48px',
+        position: 'relative'
+      }} className="animate-fade-in">
+        
+        <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '16px', zIndex: 10 }}>
+            <div style={{ background: 'var(--accent-color)', padding: '14px', borderRadius: '18px', display: 'flex', boxShadow: '0 8px 32px rgba(255,0,80,0.5)' }}>
+              <Download size={36} color="white" />
+            </div>
+            <h1 style={{ fontSize: '4.5rem', fontWeight: '800', letterSpacing: '-2px', color: '#fff', margin: 0 }}>GrabYT</h1>
           </div>
-          <h1 style={{ fontSize: '3rem', fontWeight: '700', letterSpacing: '-1px' }}>GrabYT</h1>
+          
+          {/* Sparkles Core & Glowing Line */}
+          <div style={{ width: '40rem', height: '40px', position: 'relative' }}>
+            {/* Gradients */}
+            <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: '75%', height: '2px', background: 'linear-gradient(90deg, transparent, rgba(255,0,80,0.8), transparent)', filter: 'blur(2px)' }} />
+            <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: '75%', height: '1px', background: 'linear-gradient(90deg, transparent, rgba(255,0,80,0.8), transparent)' }} />
+            <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: '25%', height: '5px', background: 'linear-gradient(90deg, transparent, rgba(255,0,80,1), transparent)', filter: 'blur(4px)' }} />
+            <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: '25%', height: '2px', background: 'linear-gradient(90deg, transparent, rgba(255,0,80,1), transparent)' }} />
+
+            {/* Core component */}
+            <div style={{ position: 'absolute', top: '2px', left: 0, width: '100%', height: '100%' }}>
+              <SparklesCore
+                background="transparent"
+                minSize={0.4}
+                maxSize={1.5}
+                particleDensity={1200}
+                className="w-full h-full"
+                particleColor="#FFFFFF"
+              />
+            </div>
+
+            {/* Radial Gradient to prevent sharp edges */}
+            <div style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', background: 'radial-gradient(ellipse at center, transparent 20%, #000 100%)' }} />
+          </div>
+
+          <p style={{ fontSize: '1.2rem', color: 'rgba(255,255,255,0.7)', maxWidth: '500px', margin: '16px auto 0', textAlign: 'center', zIndex: 10 }}>
+            Download YouTube videos in high quality. Fast, free, and secure.
+          </p>
         </div>
-        <p style={{ fontSize: '1.2rem', color: 'rgba(255,255,255,0.7)', maxWidth: '500px', margin: '0 auto' }}>
-          Download YouTube videos in high quality. Fast, free, and secure.
-        </p>
       </div>
 
       <div className="glass animate-fade-in" style={{ padding: '8px', animationDelay: '0.1s' }}>

@@ -11,6 +11,10 @@
   "dependencies": {
     "@clerk/nextjs": "^7.5.13",
     "@distube/ytdl-core": "^4.16.12",
+    "@tsparticles/engine": "^4.3.1",
+    "@tsparticles/react": "^4.3.1",
+    "@tsparticles/slim": "^4.3.1",
+    "framer-motion": "^12.42.2",
     "ioredis": "^5.11.1",
     "lucide-react": "^1.23.0",
     "next": "16.2.10",
