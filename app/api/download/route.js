@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server';
 
-export const runtime = 'edge';
-
 export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
@@ -25,12 +23,11 @@ export async function GET(req) {
       );
     }
 
-    // Fetch the video stream with headers to avoid 403 Forbidden
+    // Fetch the video stream with standard headers to avoid 403
     const fetchHeaders = new Headers();
-    fetchHeaders.set('User-Agent', req.headers.get('user-agent') || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36');
-    fetchHeaders.set('Referer', 'https://www.youtube.com/');
-    fetchHeaders.set('Origin', 'https://www.youtube.com');
-
+    fetchHeaders.set('User-Agent', req.headers.get('user-agent') || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+    fetchHeaders.set('Accept', '*/*');
+    
     const response = await fetch(downloadUrl, {
       headers: fetchHeaders
     });
@@ -42,6 +39,8 @@ export async function GET(req) {
     // Forward the headers, but force the Content-Disposition to attachment
     const headers = new Headers(response.headers);
     headers.set('Content-Disposition', `attachment; filename="${encodeURIComponent(title)}.mp4"`);
+    // Crucial: remove any strict Content-Security-Policy that might block
+    headers.delete('Content-Security-Policy');
     
     // Return the response body stream directly
     return new NextResponse(response.body, {
