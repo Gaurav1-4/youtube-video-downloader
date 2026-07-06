@@ -25,8 +25,15 @@ export async function GET(req) {
       );
     }
 
-    // Fetch the video stream
-    const response = await fetch(downloadUrl);
+    // Fetch the video stream with headers to avoid 403 Forbidden
+    const fetchHeaders = new Headers();
+    fetchHeaders.set('User-Agent', req.headers.get('user-agent') || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36');
+    fetchHeaders.set('Referer', 'https://www.youtube.com/');
+    fetchHeaders.set('Origin', 'https://www.youtube.com');
+
+    const response = await fetch(downloadUrl, {
+      headers: fetchHeaders
+    });
     
     if (!response.ok) {
       throw new Error(`Failed to fetch from source: ${response.statusText}`);
