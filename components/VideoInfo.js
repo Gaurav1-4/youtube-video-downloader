@@ -1,12 +1,28 @@
-import { Download, Video, Music, FileVideo } from 'lucide-react';
+import { Download, Video, Music, Clock } from 'lucide-react';
 import React, { useState } from 'react';
 
 export default function VideoInfo({ videoData, url }) {
   const [downloading, setDownloading] = useState(false);
 
+  const getVideoId = (url) => {
+    try {
+      const parsed = new URL(url);
+      if (parsed.hostname.includes('youtube.com')) {
+        return parsed.searchParams.get('v');
+      }
+      if (parsed.hostname.includes('youtu.be')) {
+        return parsed.pathname.slice(1);
+      }
+    } catch (e) {
+      return null;
+    }
+    return null;
+  };
+  
+  const videoId = getVideoId(url);
+
   const handleDownload = (itag, title) => {
     setDownloading(true);
-    // Create an invisible anchor tag to trigger the download download
     const downloadUrl = `/api/download?url=${encodeURIComponent(url)}&itag=${itag}&title=${encodeURIComponent(title)}`;
     
     const a = document.createElement('a');
@@ -18,7 +34,7 @@ export default function VideoInfo({ videoData, url }) {
     
     setTimeout(() => {
       setDownloading(false);
-    }, 2000); // Reset state after a short delay
+    }, 2000);
   };
 
   const formatSeconds = (seconds) => {
@@ -30,51 +46,77 @@ export default function VideoInfo({ videoData, url }) {
       .join(':');
   };
 
-  const renderFormatList = (formats, type, IconComponent) => {
+  const renderFormatList = (formats, type, IconComponent, badgeText) => {
     if (!formats || formats.length === 0) return null;
 
     return (
-      <div style={{ marginBottom: '24px' }}>
-        <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.2rem', marginBottom: '12px', color: 'rgba(255,255,255,0.9)' }}>
-          <IconComponent size={20} color="var(--accent-color)" /> {type}
+      <div style={{ marginBottom: '32px' }}>
+        <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.2rem', padding: '16px', borderBottom: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.9)', margin: 0, background: 'rgba(0,0,0,0.2)', borderTopLeftRadius: '12px', borderTopRightRadius: '12px' }}>
+          <IconComponent size={20} color={badgeText === 'MP4' ? '#10b981' : '#10b981'} /> {type}
         </h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '12px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', background: 'rgba(255,255,255,0.02)', borderBottomLeftRadius: '12px', borderBottomRightRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', borderTop: 'none' }}>
           {formats.map((format, index) => (
-            <button
+            <div
               key={`${format.itag}-${index}`}
-              onClick={() => handleDownload(format.itag, videoData.title)}
               style={{
-                background: 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                padding: '12px',
-                borderRadius: '12px',
-                color: 'white',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
                 display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'flex-start',
-                gap: '4px'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
-                e.currentTarget.style.borderColor = 'var(--accent-color)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
-                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '16px',
+                borderBottom: index < formats.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none',
+                gap: '16px',
+                flexWrap: 'wrap'
               }}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
-                <span style={{ fontWeight: '600' }}>{format.qualityLabel || 'Audio'}</span>
-                <span style={{ fontSize: '0.8rem', opacity: 0.7, textTransform: 'uppercase' }}>{format.container}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flex: 1, minWidth: '200px' }}>
+                <span style={{ 
+                  background: '#f59e0b', 
+                  color: '#fff', 
+                  padding: '4px 8px', 
+                  borderRadius: '6px', 
+                  fontSize: '0.8rem', 
+                  fontWeight: 'bold',
+                  boxShadow: '0 2px 8px rgba(245, 158, 11, 0.3)'
+                }}>
+                  {badgeText}
+                </span>
+                <span style={{ fontWeight: '600', fontSize: '1rem', minWidth: '80px' }}>
+                  {format.qualityLabel || 'Audio'}
+                </span>
+                <span style={{ fontSize: '0.9rem', opacity: 0.7 }}>
+                  {format.contentLength ? `${(parseInt(format.contentLength) / (1024 * 1024)).toFixed(2)} MB` : 'Size Unknown'}
+                </span>
               </div>
-              {format.contentLength && (
-                <div style={{ fontSize: '0.85rem', opacity: 0.6 }}>
-                  {(parseInt(format.contentLength) / (1024 * 1024)).toFixed(1)} MB
-                </div>
-              )}
-            </button>
+              
+              <button
+                onClick={() => handleDownload(format.itag, videoData.title)}
+                style={{
+                  background: 'transparent',
+                  border: '1px solid #10b981',
+                  color: '#10b981',
+                  padding: '8px 16px',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontWeight: '600',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  transition: 'all 0.2s',
+                  boxShadow: '0 4px 12px rgba(16, 185, 129, 0.1)'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#10b981';
+                  e.currentTarget.style.color = '#fff';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent';
+                  e.currentTarget.style.color = '#10b981';
+                }}
+              >
+                <Download size={16} />
+                Download
+              </button>
+            </div>
           ))}
         </div>
       </div>
@@ -82,41 +124,75 @@ export default function VideoInfo({ videoData, url }) {
   };
 
   return (
-    <div className="glass animate-fade-in" style={{ padding: '32px', marginTop: '32px' }}>
-      <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap', marginBottom: '32px' }}>
-        <div style={{ flex: '1 1 300px' }}>
-          <img 
-            src={videoData.thumbnail} 
-            alt={videoData.title} 
-            style={{ 
-              width: '100%', 
-              borderRadius: '16px', 
-              boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
-              objectFit: 'cover',
-              aspectRatio: '16/9'
-            }} 
-          />
-        </div>
-        <div style={{ flex: '2 1 300px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-          <h2 style={{ fontSize: '1.8rem', marginBottom: '8px', lineHeight: 1.2 }}>{videoData.title}</h2>
-          <div style={{ display: 'flex', gap: '16px', opacity: 0.7, marginBottom: '16px', fontSize: '0.95rem' }}>
-            <span>{videoData.author}</span>
-            <span>•</span>
-            <span>{formatSeconds(videoData.lengthSeconds)}</span>
+    <div className="glass animate-fade-in" style={{ padding: '24px', marginTop: '32px' }}>
+      <div style={{ display: 'flex', gap: '32px', flexWrap: 'wrap' }}>
+        
+        {/* Left Column: Video & Info */}
+        <div style={{ flex: '1 1 350px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div style={{ 
+            width: '100%', 
+            borderRadius: '12px', 
+            overflow: 'hidden', 
+            boxShadow: '0 12px 32px rgba(0,0,0,0.5)',
+            aspectRatio: '16/9',
+            background: '#000'
+          }}>
+            {videoId ? (
+              <iframe
+                width="100%"
+                height="100%"
+                src={`https://www.youtube.com/embed/${videoId}`}
+                title={videoData.title}
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              ></iframe>
+            ) : (
+              <img 
+                src={videoData.thumbnail} 
+                alt={videoData.title} 
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+              />
+            )}
           </div>
+          
+          <h2 style={{ fontSize: '1.4rem', lineHeight: 1.3, fontWeight: '600' }}>
+            {videoData.title}
+          </h2>
+          
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <span style={{ 
+              display: 'inline-flex', 
+              alignItems: 'center', 
+              gap: '6px', 
+              background: '#4ade80', 
+              color: '#064e3b', 
+              padding: '6px 12px', 
+              borderRadius: '8px',
+              fontSize: '0.95rem',
+              fontWeight: '700'
+            }}>
+              <Clock size={16} /> {formatSeconds(videoData.lengthSeconds)}
+            </span>
+            <span style={{ opacity: 0.7, fontSize: '0.95rem' }}>
+              {videoData.author}
+            </span>
+          </div>
+
           {downloading && (
-            <div style={{ color: 'var(--accent-color)', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '8px', padding: '12px', background: 'rgba(255,0,80,0.1)', borderRadius: '8px' }}>
+            <div style={{ color: 'var(--accent-color)', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '8px', padding: '12px', background: 'rgba(255,0,80,0.1)', borderRadius: '8px', marginTop: '16px' }}>
               <Download size={16} className="animate-pulse" />
               Download started! (Check your browser downloads)
             </div>
           )}
         </div>
-      </div>
 
-      <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '24px' }}>
-        {renderFormatList(videoData.formats.videoWithAudio, 'Video + Audio (Ready to play)', Video)}
-        {renderFormatList(videoData.formats.videoOnly, 'Video Only (High Quality, No Sound)', FileVideo)}
-        {renderFormatList(videoData.formats.audioOnly, 'Audio Only (Music/Podcasts)', Music)}
+        {/* Right Column: Download Formats */}
+        <div style={{ flex: '2 1 400px' }}>
+          {renderFormatList([...(videoData.formats.videoWithAudio || []), ...(videoData.formats.videoOnly || [])], 'Video', Video, 'MP4')}
+          {renderFormatList(videoData.formats.audioOnly, 'Music', Music, 'MP3')}
+        </div>
+        
       </div>
     </div>
   );
