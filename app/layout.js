@@ -1,6 +1,7 @@
 import { ClerkProvider } from '@clerk/nextjs';
 import { currentUser } from '@clerk/nextjs/server';
 import { UserButton } from '@clerk/nextjs';
+import { redis } from '../lib/redis';
 import './globals.css';
 
 export const metadata = {
@@ -8,25 +9,19 @@ export const metadata = {
   description: 'A premium, fast, and secure tool to download YouTube videos directly to your device.',
 };
 
-const ALLOWED_EMAILS = [
-  'gauravgoyal2112007@gmail.com',
-  'studyonly.co@gmail.com',
-  'carryoncrush@gmail.com',
-  'tapsya998@gmail.com',
-  'gaurav7015467655@gmail.com',
-  'splicevoid@gmail.com',
-  'gaurav25212@iiitd.ac.in'
-];
-
 export default async function RootLayout({ children }) {
   const user = await currentUser();
   
-  // If user is logged in, check if their primary email is in the allowlist
+  // If user is logged in, securely check Vercel Redis if their primary email is allowed
   let isAllowed = false;
   if (user) {
     const email = user.primaryEmailAddress?.emailAddress;
-    if (email && ALLOWED_EMAILS.includes(email)) {
-      isAllowed = true;
+    if (email) {
+      // redis.sismember returns 1 if the email exists in the set, 0 otherwise
+      const isMember = await redis.sismember('allowed_emails', email);
+      if (isMember === 1) {
+        isAllowed = true;
+      }
     }
   } else {
     // If they are not logged in yet, middleware handles redirecting to sign-in.
